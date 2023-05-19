@@ -1,0 +1,28 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{3DBD32CB-4499-79CE-62C5-FEB6FAE6B43C}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "Parnny",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "PaaNetwork",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "ParnnyNetwork",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "ParnnyCore",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
