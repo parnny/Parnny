@@ -6,6 +6,27 @@
 #include "ParnnyCore/Public/ParnnyActor.h"
 #include "ParnnyActor_Net.generated.h"
 
+USTRUCT()
+struct FMiniJCW
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	FName Engine = "B48";
+};
+
+template<>
+struct TStructOpsTypeTraits<FMiniJCW> : TStructOpsTypeTraitsBase2<FMiniJCW>
+{
+	enum
+	{
+		WithNetSerializer = true,
+		WithNetSharedSerialization = true,
+		WithIdenticalViaEquality = true,
+	};
+};
+
+
 UCLASS()
 class PARNNYNETWORK_API AParnnyActor_Net : public AParnnyActor
 {

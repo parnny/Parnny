@@ -10,11 +10,6 @@
 			"LoadingPhase": "Default"
 		},
 		{
-			"Name": "PaaNetwork",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		},
-		{
 			"Name": "ParnnyNetwork",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"

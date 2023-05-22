@@ -10,7 +10,9 @@
 > 
 
 ## Reference
-[服务器同步属性](https://zhuanlan.zhihu.com/p/412517987)
+* [服务器同步属性](https://zhuanlan.zhihu.com/p/412517987)
+* [客户端接收属性同步数据](https://zhuanlan.zhihu.com/p/587136954)
+* [简介](https://www.youtube.com/watch?v=JOJP0CvpB8w)
 
 ## Enums
 ### ENetFields
@@ -193,6 +195,298 @@ ERepLayoutCmdFlags Flags;
 >           - FRepChangelistState RepChangelistState // 实际存储属性变动历史
 >               - FRepStateStaticBuffer StaticBuffer // ShadowBuffer
 > ```
+
+## **UNetDriver**
+> 创建堆栈
+```c++
+UWorld::Listen(FURL &)
+UEngine::CreateNamedNetDriver(UWorld *,FName,FName)
+CreateNamedNetDriver_Local(UEngine *,FWorldContext &,FName,FName)
+CreateNetDriver_Local(UEngine *,FWorldContext &,FName)
+UIpNetDriver::UIpNetDriver(const FObjectInitializer &)
+UNetDriver::UNetDriver(const FObjectInitializer &)
+```
+### **Tick**
+> NetDriver的Tick函数是注册在World里
+ ```c++
+// 注册Tick函数
+ENGINE_API void RegisterTickEvents(class UWorld* InWorld);
+// 收取处理数据包
+ENGINE_API virtual void TickDispatch( float DeltaTime );
+// 发送数据包
+ENGINE_API virtual void TickFlush(float DeltaSeconds);
+```
+## 服务器同步属性
+### TickFlush && ServerReplicateActors
+```c++
+void UNetDriver::TickFlush(float DeltaSeconds)
+{
+    // ...
+    if (IsServer() && ClientConnections.Num() > 0 && !bSkipServerReplicateActors)
+    {
+        // Update all clients.
+#if WITH_SERVER_CODE
+        int32 Updated = ServerReplicateActors( DeltaSeconds )
+        {
+            // ...
+            // 遍历所有链接
+            for ( int32 i=0; i < ClientConnections.Num(); i++ )
+            {
+                // ...
+                // 根据当前的ViewTarget，筛选需要更同步Actor
+                if (Connection->ViewTarget)
+                {
+                    // Get a sorted list of actors for this connection
+                    // 根据当前的ViewTarget，对需要更新的Actor进行排序
+                    const int32 FinalSortedCount = ServerReplicateActors_PrioritizeActors(...);
+                    // 根据排序后的Actor列表，对Actor进行同步
+                    const int32 LastProcessedActor = ServerReplicateActors_ProcessPrioritizedActors(...)
+                    {
+                        // ...
+                        UActorChannel* Channel = PriorityActors[j]->Channel;
+                        // ...
+                        // 同步Actor属性
+                        Channel->ReplicateActor()
+                        {
+                            // ...
+                            ActorReplicator->ReplicateProperties(Bunch, RepFlags); // 同步当前Actor的属性
+                            Actor->ReplicateSubobjects(this, &Bunch, &RepFlags);    // 同步Subobject的属性
+                        }
+                    }
+                    // ...
+                }
+            }
+        }
+        //...
+#endif
+    }
+}
+```
+
+## **对比属性**
+
+### FReplicationChangelistMgr
+> 管理自对象开始复制以来发生的特定复制对象的更改列表
+#### 关键字段
+```c++
+FRepChangelistState RepChangelistState;
+```
+
+### FRepChangelistState
+> 存储对象的变更列表历史
+> 
+#### 描述
+> * **ChangeList为环形Buffer，在数量上有限制，超过数量限制时，会将最早的ChangeList合并，所以数据不会丢弃**
+> * MAX_CHANGE_HISTORY = 32
+
+#### 关键字段
+```c++
+/** Circular buffer of changelists. */
+FRepChangedHistory ChangeHistory[MAX_CHANGE_HISTORY];
+```
+
+### FRepChangedHistory
+> 单个更改列表，跟踪更改的属性
+#### 关键字段
+```c++
+// 该Changelist中发生变化的属性列表
+TArray<uint16> Changed;
+// 是否需要重发
+bool Resend;
+```
+
+#### CompareProperties
+```c++
+bool FObjectReplicator::ReplicateProperties( FOutBunch & Bunch, FReplicationFlags RepFlags )
+{
+    // ...
+    // 更新变化列表
+    RepLayout.UpdateChangelistMgr(...)
+    {
+        // 对比属性
+        ERepLayoutResult Result = CompareProperties(...);
+    }
+    // 属性同步
+    // FSendingRepState 发送属性的状态
+    // FRepChangelistState 属性变化的历史
+    RepLayout->ReplicateProperties( FSendingRepState, FRepChangelistState);
+    // ...
+    // 如果列表满了，合并最早的Changelist
+    if ((RepChangelistState->HistoryEnd - RepChangelistState->HistoryStart) == FRepChangelistState::MAX_CHANGE_HISTORY)
+	{
+	    // ...
+        MergeChangeList(...)
+	}
+}
+```
+
+## **发送属性同步数据**
+> 生成Changed数据是对于Actor的, 主要使用 **FRepChangelistState** \
+    而发送数据是对于 **ClientConnection** 的, 主要使用 **FSendingRepState**
+
+### FSendingRepState
+> 需要同步属性时才用到的状态 \
+> 每个ClientConnection都有一个
+#### 关键字段
+```c++
+// 需要发送的变化列表
+FRepChangedHistory ChangeHistory[MAX_CHANGE_HISTORY];
+```
+
+> 
+### 关键方法
+```c++
+bool FRepLayout::ReplicateProperties(...)
+{
+    // ...
+    SendProperties(...)
+    {
+        // ...
+        while (HandleIterator.NextHandle())
+	    {
+		    const FRepLayoutCmd& Cmd = Cmds[HandleIterator.CmdIndex];
+		    // ...
+		    WritePropertyHandle(Writer, HandleIterator.Handle, bDoChecksum);
+            Cmd.Property->NetSerializeItem(Writer, Writer.PackageMap, const_cast<uint8*>(Data.Data)); // 序列化属性
+            // ...
+		}
+    }
+}
+```
+
+## **共享序列化数据**
+> changelist可以在多个connection间共享 \
+> 序列化数据同样可以共享
+
+### UStruct实现序列化数据共享
+```c++
+USTRUCT()
+struct FMiniJCW
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	FName Engine = "B48";
+};
+
+template<>
+struct TStructOpsTypeTraits<FMiniJCW> : TStructOpsTypeTraitsBase2<FMiniJCW>
+{
+	enum
+	{
+		WithNetSerializer = true,
+		WithNetSharedSerialization = true,
+		WithIdenticalViaEquality = true,
+	};
+};
+```
+
+## **客户端接收同步属性**
+### UNetDriver::PostTickDispatch
+```c++
+// Tick时处理数据的过程
+void UIpNetDriver::TickDispatch(float DeltaTime)
+{
+    // ...
+    // 处理所有收到的数据包
+    for (FPacketIterator It(this); It; ++It)
+    {
+        // ...
+        // 处理原始数据包
+        Connection->ReceivedRawPacket(...)
+        {
+            // ...
+            // 处理数据包
+            ReceivedPacket(Reader)
+            {
+                // ...
+                Channel->ReceivedRawBunch(...) //warning: May destroy channel.
+                {
+                    // ...
+                    bDeleted = ReceivedNextBunch( *Release, bLocalSkipAck );
+                    // ...
+                    return ReceivedSequencedBunch( *HandleBunch )
+                    {
+                        // ...
+                        ReceivedBunch( Bunch )
+                        // ...
+                        ProcessBunch(Bunch);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 对于ActorChannel实现
+void UActorChannel::ReceivedBunch( FInBunch & Bunch )
+{
+    // ...
+    // 交由ActorReplicator处理
+    Replicator->ReceivedBunch()
+    {
+        // ...
+        // 交由LocalRepLayout处理
+        LocalRepLayout.ReceiveProperties(...)
+    }
+}
+```
+
+### Bunch
+> UE底层使用定制的UDP协议传输网络数据，可针对业务类型，对一些数据保证可靠性，另一些数据不保证可靠性。 \
+> 网络底层包结构为Packet，可理解为TCP/IP传输层的UDP包（实际算应用层，只是含义偏向底层），\
+> 上层包结构为Bunch，可理解为TCP/IP应用层的包，是UE自己定义的格式。
+
+```c++
+/**
+ * A channel for exchanging actor and its subobject's properties and RPCs.
+ *
+ * ActorChannel manages the creation and lifetime of a replicated actor. Actual replication of properties and RPCs
+ * actually happens in FObjectReplicator now (see DataReplication.h).
+ *
+ * An ActorChannel bunch looks like this:
+ *
+ * +----------------------+---------------------------------------------------------------------------+
+ * | SpawnInfo            | (Spawn Info) Initial bunch only                                           |
+ * |  -Actor Class        |   -Created by ActorChannel                                                |
+ * |  -Spawn Loc/Rot      |                                                                           |
+ * | NetGUID assigns      |                                                                           |
+ * |  -Actor NetGUID      |                                                                           |
+ * |  -Component NetGUIDs |                                                                           |
+ * +----------------------+---------------------------------------------------------------------------+
+ * |                      |                                                                           |
+ * +----------------------+---------------------------------------------------------------------------+
+ * | NetGUID ObjRef       | (Content chunks) x number of replicating objects (Actor + any components) |
+ * |                      |   -Each chunk created by its own FObjectReplicator instance.              |
+ * +----------------------+---------------------------------------------------------------------------+
+ * |                      |                                                                           |
+ * | Properties...        |                                                                           |
+ * |                      |                                                                           |
+ * | RPCs...              |                                                                           |
+ * |                      |                                                                           |
+ * +----------------------+---------------------------------------------------------------------------+
+ * | </End Tag>           |                                                                           |
+ * +----------------------+---------------------------------------------------------------------------+
+ */
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
