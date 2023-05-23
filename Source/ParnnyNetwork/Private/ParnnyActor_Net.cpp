@@ -7,6 +7,7 @@
 
 DECLARE_LOG_CATEGORY_CLASS(LogParnnyNetwork, Log, All);
 
+
 void AParnnyActor_Net::OnRep_BoughtJCW() const
 {
 	if (bHaveMiniJCW)
@@ -37,4 +38,24 @@ void AParnnyActor_Net::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 		// This property will only send to the actor's owner
 		DOREPLIFETIME_CONDITION(AParnnyActor_Net, PropArray, COND_OwnerOnly);
 	}
+}
+
+void AParnnyActor_Net::RPCClient_Implementation()
+{
+	UE_LOG(LogParnnyNetwork, Display, TEXT("%s"), ANSI_TO_TCHAR(__FUNCTION__));
+}
+
+void AParnnyActor_Net::RPCServerWithValidation_Implementation()
+{
+	UE_LOG(LogParnnyNetwork, Display, TEXT("%s"), ANSI_TO_TCHAR(__FUNCTION__));
+}
+
+bool AParnnyActor_Net::RPCServerWithValidation_Validate()
+{
+	return true;
+}
+
+void AParnnyActor_Net::RPCMulticast_Implementation()
+{
+	UE_LOG(LogParnnyNetwork, Display, TEXT("%s"), ANSI_TO_TCHAR(__FUNCTION__));
 }

@@ -13,6 +13,17 @@ struct FMiniJCW
 
 	UPROPERTY(EditAnywhere)
 	FName Engine = "B48";
+	
+	FORCEINLINE bool operator==(FMiniJCW const& Other) const
+	{
+		return Engine == Other.Engine;
+	}
+
+	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess)
+	{
+		bOutSuccess = true;
+		return true;
+	}
 };
 
 template<>
@@ -50,6 +61,15 @@ public:
 	// UHT会自动调用这个函数，用于设置同步策略
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
+	UFUNCTION(Reliable, Client)
+	void RPCClient();
+
+	UFUNCTION(Reliable, Server, WithValidation)
+	void RPCServerWithValidation();
+
+	UFUNCTION(Reliable, NetMulticast)
+	void RPCMulticast();
+	
 protected:
 	UFUNCTION()
 	void OnRep_BoughtJCW() const;

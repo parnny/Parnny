@@ -400,6 +400,14 @@ void UIpNetDriver::TickDispatch(float DeltaTime)
             ReceivedPacket(Reader)
             {
                 // ...
+                // Parse the incoming data.
+                FInBunch Bunch( this );
+                int32 IncomingStartPos      = Reader.GetPosBits();
+                uint8 bControl              = Reader.ReadBit();
+                Bunch.PacketId              = InPacketId;
+                Bunch.bOpen                 = bControl ? Reader.ReadBit() : 0;
+                Bunch.bClose                = bControl ? Reader.ReadBit() : 0;
+                // ...
                 Channel->ReceivedRawBunch(...) //warning: May destroy channel.
                 {
                     // ...
@@ -417,26 +425,31 @@ void UIpNetDriver::TickDispatch(float DeltaTime)
         }
     }
 }
-
-// 对于ActorChannel实现
-void UActorChannel::ReceivedBunch( FInBunch & Bunch )
-{
-    // ...
-    // 交由ActorReplicator处理
-    Replicator->ReceivedBunch()
-    {
-        // ...
-        // 交由LocalRepLayout处理
-        LocalRepLayout.ReceiveProperties(...)
-    }
-}
 ```
 
 ### Bunch
 > UE底层使用定制的UDP协议传输网络数据，可针对业务类型，对一些数据保证可靠性，另一些数据不保证可靠性。 \
 > 网络底层包结构为Packet，可理解为TCP/IP传输层的UDP包（实际算应用层，只是含义偏向底层），\
 > 上层包结构为Bunch，可理解为TCP/IP应用层的包，是UE自己定义的格式。
+> 
+#### 关键字段
+```c++
+class ENGINE_API FInBunch : public FNetBitReader
+{
+	int32				ChIndex;    // Channel Index, Bunch所属Channel的下标, 该下标在client和server上应该要一致
+	uint8				bOpen:1;    // 是否需要打开Channel
+	uint8				bClose:1;   // 是否需要关闭Channel
+	uint8				bReliable:1;// 是否可靠
+	uint8				bPartial:1;	// Not a complete bunch, 完整的Bunch分块传输
+	
+}
+```
 
+### ActorChannel
+> ActorChannel是一个Channel，用于传输Actor的属性和RPC \
+> ActorChannel的下标在client和server上应该要一致 \
+> **客户端上Actor的创建和销毁也由ActorChannel解析服务器发来的消息驱动**
+#### ActorChannel的描述
 ```c++
 /**
  * A channel for exchanging actor and its subobject's properties and RPCs.
@@ -469,19 +482,129 @@ void UActorChannel::ReceivedBunch( FInBunch & Bunch )
  * +----------------------+---------------------------------------------------------------------------+
  */
 ```
+### UActorChannel::ReceivedBunch
+```c++
+void UActorChannel::ReceivedBunch( FInBunch & Bunch )
+{
+    // ...
+    ProcessBunch(Bunch)
+    {
+        // ...
+        if( Actor == NULL )
+        {
+            // 序列化Actor
+            AActor* NewChannelActor = NULL;
+            bSpawnedNewActor = Connection->PackageMap->SerializeNewActor(Bunch, this, NewChannelActor)
+            // UPackageMapClient::SerializeNewActor
+            {
+                FNetworkGUID NetGUID;
+                UObject *NewObj = Actor;
+                SerializeObject(Ar, AActor::StaticClass(), NewObj, &NetGUID);
+            }
+        }
+        
+        // ----------------------------------------------
+        //	Read chunks of actor content
+        // ----------------------------------------------
+        while ( !Bunch.AtEnd() && Connection != NULL && Connection->State != USOCK_Closed )
+        {
+            // ...
+            // 交由ActorReplicator处理
+            Replicator->ReceivedBunch()
+            {
+                // ...
+                // 交由LocalRepLayout处理
+                LocalRepLayout.ReceiveProperties(...)
+            }
+        }
+    }
+}
+```
 
+## **远程方法调用(RPC, Remote Procedure Call)**
+> * RPC可由client发往server
+> * RPC是瞬时的，不存在状态
+> * rpc会在游戏tick过程中发送，而通常Actor的同步和Channel创建要在tick末尾，因此可能出现处理rpc时Channel还未创建的情况。在此时立即调用一次ReplicateActor，写入Actor初始同步数据即可。
 
+### RPC函数宏使用
+```c++
+UFUNCTION(Reliable, Client)
+void RPCClient();
 
+UFUNCTION(Reliable, Server, WithValidation)
+void RPCServerWithValidation();
 
+UFUNCTION(Reliable, NetMulticast)
+void RPCMulticast();
+```
 
+### RPC反射代码
+```c++
+*.h
+// 方法定义
+UFUNCTION(Reliable, Server, WithValidation)
+void RPCServerWithValidation();
 
+*.cpp
+// 方法实现
+void AParnnyActor_Net::RPCServerWithValidation_Implementation()
+{
+}
+// 验证方法实现
+bool AParnnyActor_Net::RPCServerWithValidation_Validate()
+{
+    return true;
+}
 
+*.gen.cpp
+// 反射代码
+static FName NAME_AParnnyActor_Net_RPCServerWithValidation = FName(TEXT("RPCServerWithValidation"));
+void AParnnyActor_Net::RPCServerWithValidation()
+{
+    ProcessEvent(FindFunctionChecked(NAME_AParnnyActor_Net_RPCServerWithValidation),NULL);
+}
 
+DEFINE_FUNCTION(AParnnyActor_Net::execRPCServerWithValidation)
+{
+    P_FINISH;
+    P_NATIVE_BEGIN;
+    if (!P_THIS->RPCServerWithValidation_Validate())
+    {
+        RPC_ValidateFailed(TEXT("RPCServerWithValidation_Validate"));
+        return;
+    }
+    P_THIS->RPCServerWithValidation_Implementation();
+    P_NATIVE_END;
+}
+```
 
-
-
-
-
+### UNetDriver::ProcessRemoteFunction
+```c++
+void UObject::ProcessEvent( UFunction* Function, void* Parms )
+{
+    // ...
+    // 判断是不是RPC
+    int32 FunctionCallspace = GetFunctionCallspace(Function, NULL);
+    if (FunctionCallspace & FunctionCallspace::Remote)
+    {
+        // AActor::CallRemoteFunction
+        CallRemoteFunction(Function, Parms, NULL, NULL)
+        {
+            // ...
+            // 遍历所有的NetDriver
+            for (FNamedNetDriver& Driver : Context->ActiveNetDrivers)
+            {
+                if (Driver.NetDriver != nullptr && Driver.NetDriver->ShouldReplicateFunction(...))
+                {
+                    Driver.NetDriver->ProcessRemoteFunction(this, Function, Parameters, OutParms, Stack, nullptr);
+                    bProcessed = true;
+                }
+            }
+        }
+    }
+}
+```
+### 单播、多播RPC区别
 
 
 
