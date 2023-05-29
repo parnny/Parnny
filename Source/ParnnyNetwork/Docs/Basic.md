@@ -12,7 +12,6 @@
 ## Reference
 * [服务器同步属性](https://zhuanlan.zhihu.com/p/412517987)
 * [客户端接收属性同步数据](https://zhuanlan.zhihu.com/p/587136954)
-* [简介](https://www.youtube.com/watch?v=JOJP0CvpB8w)
 
 ## Enums
 ### ENetFields

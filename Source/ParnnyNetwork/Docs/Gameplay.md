@@ -1,13 +1,16 @@
 # Gameplay
 
 ## ParnnyNote
-> 
-> 
-> 
-> 
+> GameMode : ServerOnly
+> GameState: Rep to All Clients
+> GameSession: ServerOnly
+> PlayerController: Rep to Owning Client
+> PlayerState : Rep to All Clients
+> Pawn : Rep to Relevant Client
 
 
-## Net Mode
+## Enums
+### Net Mode
 ```c++
 enum ENetMode
 {
@@ -35,11 +38,31 @@ enum ENetMode
 | ListenServer      | √        |     √       |    √     |
 | Client      | √        |      ×      |    ×     |
 
-## Struct
-### FURL
+### Net Role
 ```c++
-
+// Actor在网络上的角色
+UENUM()
+enum ENetRole
+{
+    // 本地Actor, 不需要Replicate
+    ROLE_None,
+    // 本地模拟代理, 用于预测
+    ROLE_SimulatedProxy,
+    // 本地自主代理, 用于预测
+    ROLE_AutonomousProxy,
+    // 服务器控制
+    ROLE_Authority,
+};
 ```
+
+| NetRole   | Server | ClientA | ClientB |
+|-------------------|--------|---------|---------|
+| GameMode          | Authority      | None       | None       |
+| PlayerControllerA | Authority      | Autonomous       | None       |
+| PlayerControllerB | Authority      | Simulated       | Autonomous       |
+| ControlledPawnA   | Authority      | Autonomous      | Simulated       |
+| ControlledPawnB   | Authority      | Simulated       | Autonomous       |
+
 
 ## Replication System Basics
 > * GameEngine创建NetDriver
@@ -166,3 +189,35 @@ class ENGINE_API AActor : public UObject
 ### Reliable
 > * Unreliable的RPC, 会在网络不稳定时丢失(带宽不足,丢包等)
 > * Unreliable的RPC不保证顺序
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
