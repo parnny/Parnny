@@ -151,8 +151,74 @@ class SLATE_API FNavigationConfig : public TSharedFromThis<FNavigationConfig>
 ### UCommonButtonBase
 ### UCommonTextBlock
 ### UCommonActionWidget
-### UCommonBoundActionBar && UCommonBoundActionButton
 
+### UCommonBoundActionBar && UCommonBoundActionButton
+> * 用于收集当前界面的所有动作, 展示在列表中
+收集创建按钮相关代码
+```c++
+void UCommonBoundActionBar::HandleDeferredDisplayUpdate()
+{
+    // ...
+    for (const ULocalPlayer* LocalPlayer : SortedPlayers)
+    {
+        if (const UCommonUIActionRouterBase* ActionRouter = ULocalPlayer::GetSubsystem<UCommonUIActionRouterBase>(...))
+        {
+            // ...
+            TSet<FName> AcceptedBindings;
+            // 收集所有动作
+            TArray<FUIActionBindingHandle> FilteredBindings = ActionRouter->GatherActiveBindings().FilterByPredicate(...)
+            // ... Sort
+            // 创建 UCommonBoundActionButton 按钮
+            for (FUIActionBindingHandle BindingHandle : FilteredBindings)
+            {
+                ICommonBoundActionButtonInterface* ActionButton = Cast<ICommonBoundActionButtonInterface>(CreateEntryInternal(ActionButtonClass));
+                if (ensure(ActionButton))
+                {
+                    // 绑定动作
+                    ActionButton->SetRepresentedAction(BindingHandle);
+                }
+            }
+        }
+    }
+}
+```
+动作注册相关代码
+```c++
+FUIActionBindingHandle UCommonUserWidget::RegisterUIActionBinding(const FBindUIActionArgs& BindActionArgs)
+{
+    if (UCommonUIActionRouterBase* ActionRouter = UCommonUIActionRouterBase::Get(*this))
+    {
+        FBindUIActionArgs FinalBindActionArgs = BindActionArgs;
+        if (bDisplayInActionBar && !BindActionArgs.bDisplayInActionBar)
+        {
+                FinalBindActionArgs.bDisplayInActionBar = true;
+        }
+        FUIActionBindingHandle BindingHandle = ActionRouter->RegisterUIActionBinding(*this, FinalBindActionArgs);
+        ActionBindings.Add(BindingHandle);
+        return BindingHandle;
+    }
+    
+    return FUIActionBindingHandle();
+}
+
+void UCommonUserWidget::RemoveActionBinding(FUIActionBindingHandle ActionBinding)
+{
+	ActionBindings.Remove(ActionBinding);
+	if (UCommonUIActionRouterBase* ActionRouter = UCommonUIActionRouterBase::Get(*this))
+	{
+		ActionRouter->RemoveBinding(ActionBinding);
+	}
+}
+
+void UCommonUserWidget::AddActionBinding(FUIActionBindingHandle ActionBinding)
+{
+	ActionBindings.Add(ActionBinding);
+	if (UCommonUIActionRouterBase* ActionRouter = UCommonUIActionRouterBase::Get(*this))
+	{
+		ActionRouter->AddBinding(ActionBinding);
+	}
+}
+```
 ## 其他
 
 ### Xbox手柄按键对应
