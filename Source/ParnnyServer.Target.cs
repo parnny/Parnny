@@ -16,6 +16,6 @@ public class ParnnyServerTarget : TargetRules
     
     private void RegisterModulesCreatedByRider()
     {
-	    ExtraModuleNames.AddRange(new string[] { "ParnnyNetwork", "ParnnyCore", "ParnnyUI" });
+	    ExtraModuleNames.AddRange(new string[] { "ParnnyNetwork", "ParnnyCore", "ParnnyUI", "ParnnyMixin" });
     }
 }

@@ -19,7 +19,11 @@ public class ParnnyUI : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
-                "SlateCore"
+                "SlateCore", 
+                "CommonInput", 
+                "ParnnyCore",
+                "UMG",
+                "DeveloperSettings"
             }
         );
     }

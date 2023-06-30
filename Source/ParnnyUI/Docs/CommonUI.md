@@ -88,7 +88,7 @@ void UCommonInputSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 ### 相关引擎定义
 ### EUINavigation
 > * 用于描述UI导航的方向
-> * 默认情况下, 导航上下左右四个方向的导航是以鼠标位置为基准的
+> * 默认情况下, 导航上下左右四个方向的导航是以Hit Test Grid为基准的
 ```c++
 FSlateApplication::AttemptNavigation(...)
 {
