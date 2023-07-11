@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.2",
+	"EngineAssociation": "{E66812EC-4DD7-C8B7-6756-B19166195EA2}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -26,6 +26,11 @@
 		},
 		{
 			"Name": "ParnnyMixin",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "ParnnyPlugin",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
