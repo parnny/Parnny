@@ -28,6 +28,11 @@
 			"Name": "ParnnyMixin",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "ParnnyExcel",
+			"Type": "EditorNoCommandlet",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
