@@ -6,6 +6,7 @@
 #include "EditorSubsystem.h"
 #include "XlsxSubsystem.generated.h"
 
+struct FFileChangeData;
 /**
  * 
  */

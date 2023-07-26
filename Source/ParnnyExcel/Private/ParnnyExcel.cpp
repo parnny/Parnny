@@ -32,9 +32,9 @@ void FParnnyExcelModule::RegisterEditorEntry()
 {
 	if (XlsxFileDataSource)
 	{
-		 XlsxEditorEntry.Reset(NewObject<UXlsxEditorEntry>(GetTransientPackage(), "XlsxEntry"));
-		 XlsxEditorEntry->XlsxFileDataSource = XlsxFileDataSource.Get();
-		 XlsxEditorEntry->RegisterFileMenus();
+		XlsxEditorEntry.Reset(NewObject<UXlsxEditorEntry>(GetTransientPackage(), "XlsxEntry"));
+		XlsxEditorEntry->XlsxFileDataSource = XlsxFileDataSource.Get();
+		XlsxEditorEntry->RegisterFileMenus();
 		XlsxEditorEntry->RegisterDirectoryMenus();
 	}
 }

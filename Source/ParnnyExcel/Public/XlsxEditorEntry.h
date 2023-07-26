@@ -6,6 +6,8 @@
 
 #include "XlsxEditorEntry.generated.h"
 
+
+class UContentBrowserXlsxDataSource;
 /**
  * 
  */
@@ -20,6 +22,7 @@ public:
 	TObjectPtr<UContentBrowserXlsxDataSource> XlsxFileDataSource;
 	
 protected:
+	void RegisterAssetMenus();
 	void OnExtendMenu(FMenuBuilder& MenuBuilder, TArray<FString> SelectedPaths);
 	TSharedRef<FExtender> GetExtender(const TArray<FString>& SelectedPaths);
 

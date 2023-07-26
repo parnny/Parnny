@@ -6,11 +6,10 @@
 #include "ParnnyLogChannels.h"
 #include "cell/cell.hpp"
 #include "styles/fill.hpp"
-#include "styles/format.hpp"
+#include "styles/style.hpp"
 #include "workbook/workbook.hpp"
+#include "worksheet/range.hpp"
 #include "worksheet/worksheet.hpp"
-
-UE_DISABLE_OPTIMIZATION
 
 FDataTableExporterXlsx::FDataTableExporterXlsx(TArrayView<uint8>& OutExportData)
 	: ExportedData(OutExportData)
@@ -41,20 +40,37 @@ bool FDataTableExporterXlsx::WriteTable(const UDataTable& InDataTable)
 		DefaultSheets.Add(Worksheet);
 	}
 	
-	{//Data
-		xlnt::worksheet Worksheet = Workbook->create_sheet_default(0);
-		Worksheet.title("Data");
-		DataSheet = &Worksheet;
-	}
-	
 	{//Vars
 		xlnt::worksheet Worksheet = Workbook->create_sheet_default(1);
 		Worksheet.title("Vars");
+		{
+			Worksheet.cell(xlnt::cell_reference("A1")).value("RowStruct");
+			Worksheet.cell(xlnt::cell_reference("B1")).value(TCHAR_TO_UTF8(*InDataTable.RowStruct->GetFullName()));
+		}
+		{
+			Worksheet.cell(xlnt::cell_reference("A2")).value("ExportName");
+			Worksheet.cell(xlnt::cell_reference("B2")).value(TCHAR_TO_UTF8(*InDataTable.GetName()));
+		}
 	}
 
 	{//Meta
 		xlnt::worksheet Worksheet = Workbook->create_sheet_default(2);
 		Worksheet.title("Meta");
+		xlnt::cell_reference CellRef(1,1);
+		Worksheet.cell(xlnt::cell_reference("A1")).value("Field");
+		for (int32 i=2; i<=5; ++i)
+		{
+			CellRef.column_index(xlnt::column_t(i));
+			FString Prefix = i%2==0 ? "Key" : "Value";
+			FString Value = FString::Printf(TEXT("%s%d"), *Prefix, i/2);
+			Worksheet.cell(CellRef).value(TCHAR_TO_UTF8(*Value));
+		}
+	}
+	
+	{//Data
+		xlnt::worksheet Worksheet = Workbook->create_sheet_default(0);
+		Worksheet.title("Data");
+		DataSheet = &Worksheet;
 	}
 	
 	for (const xlnt::worksheet& Sheet : DefaultSheets)
@@ -105,7 +121,7 @@ bool FDataTableExporterXlsx::WriteTable(const UDataTable& InDataTable)
 		}
 		++Col_Header;
 	}
-
+	
 	int32 Cursor_Row = 2;
 	xlnt::cell_reference NameRef(Col_Name, 1);
 	for (auto RowIt = InDataTable.GetRowMap().CreateConstIterator(); RowIt; ++RowIt)
@@ -225,7 +241,14 @@ FDataTableImporterXlsx::FDataTableImporterXlsx(xlnt::workbook* InWorkbook, TArra
 	: ImportProblems(OutProblems)
 	, Workbook(InWorkbook)
 {
-	
+	if (Workbook)
+	{
+		WorksheetNames.Empty();
+		for (std::string& SheetName : Workbook->sheet_titles())
+		{
+			WorksheetNames.AddUnique(FName(SheetName.c_str()));
+		}
+	}
 }
 
 FDataTableImporterXlsx::~FDataTableImporterXlsx()
@@ -234,6 +257,10 @@ FDataTableImporterXlsx::~FDataTableImporterXlsx()
 
 void FDataTableImporterXlsx::ReadVars()
 {
+	if (WorksheetNames.Contains("Vars") == false)
+	{
+		return;
+	}
 	xlnt::worksheet RawSheet = Workbook->sheet_by_title("Vars");
 	if (RawSheet.highest_column() == 0)
 	{
@@ -257,6 +284,10 @@ void FDataTableImporterXlsx::ReadVars()
 
 void FDataTableImporterXlsx::ReadMeta()
 {
+	if (WorksheetNames.Contains("Meta") == false)
+	{
+		return;
+	}
 	xlnt::worksheet RawSheet = Workbook->sheet_by_title("Meta");
 	if (RawSheet.highest_column() == 0)
 	{
@@ -294,6 +325,10 @@ void FDataTableImporterXlsx::ReadMeta()
 
 void FDataTableImporterXlsx::ReadData(UDataTable* DataTable)
 {
+	if (WorksheetNames.Contains("Data") == false)
+	{
+		return;
+	}
 	xlnt::worksheet RawSheet = Workbook->sheet_by_title("Data");
 
 	const UScriptStruct* RowStruct = DataTable->GetRowStruct();
@@ -331,6 +366,10 @@ void FDataTableImporterXlsx::ReadData(UDataTable* DataTable)
 			FieldRef.column_index(xlnt::column_t(Col));
 			xlnt::cell Cell = RawSheet.cell(FieldRef);
 			FName FieldName = UTF8_TO_TCHAR(Cell.to_string().c_str());
+			if (FieldName.ToString().StartsWith(TEXT("#")))
+			{
+				continue;
+			}
 			FieldIndexMap.Add(FieldName, Col);
 			if (FieldName == "---" || FieldName == "RowName")
 			{
@@ -378,7 +417,7 @@ void FDataTableImporterXlsx::ReadData(UDataTable* DataTable)
 
 		xlnt::cell_reference RowNameRef(RowNameCol, Row);
 		xlnt::cell RowNameCell = RawSheet.cell(RowNameRef);
-		FName RowName = UTF8_TO_TCHAR(RowNameCell.to_string().c_str());
+		FName RowName = (RowNameCell.data_type() == xlnt::cell_type::number) ? *FString::FromInt(RowNameCell.value<int>()) : UTF8_TO_TCHAR(RowNameCell.to_string().c_str());
 
 		if (RowMap.Contains(RowName))
 		{
@@ -393,9 +432,12 @@ void FDataTableImporterXlsx::ReadData(UDataTable* DataTable)
 			const FProperty* Prop = *It;
 			FName PropName = Prop->GetFName();
 			int32 Col = FieldIndexMap.FindRef(PropName);
+			
+			if (Col == INDEX_NONE) continue;
+			
+			FString Value;
 			if (const FXlsxFieldMeta* FieldMeta = TableFieldMeta.Find(PropName))
 			{
-				FString Value;
 				if (FieldMeta->HasMeta("Ref"))
 				{
 					FName RefSheetName = FieldMeta->GetMeta("Ref");
@@ -407,27 +449,28 @@ void FDataTableImporterXlsx::ReadData(UDataTable* DataTable)
 						}
 					}
 				}
-				FString CellValue;
+			}
+			
+			FString CellValue;
+			{
+				xlnt::cell_reference CellRef(Col, Row);
+				xlnt::cell Cell = RawSheet.cell(CellRef);
+				CellValue = UTF8_TO_TCHAR(Cell.to_string().c_str());
+				if (Value.StartsWith("#", ESearchCase::IgnoreCase))
 				{
-					xlnt::cell_reference CellRef(Col, Row);
-					xlnt::cell Cell = RawSheet.cell(CellRef);
-					CellValue = UTF8_TO_TCHAR(Cell.to_string().c_str());
-					if (Value.StartsWith("#", ESearchCase::IgnoreCase))
-					{
-						continue;
-					}
+					continue;
 				}
-				
-				if (Value.IsEmpty() && Col != INDEX_NONE)
-				{
-					Value = CellValue;
-				}
-				
-				FString ErrorStr = DataTableUtils::AssignStringToProperty(Value, Prop, RowData);
-				if (ErrorStr.Len() > 0)
-				{
-					UE_LOG(LogParnnyExcel, Error, TEXT("Problem assigning string '%s' to property '%s' on row '%d' : %s"), *Value, *PropName.ToString(), Row, *ErrorStr);
-				}
+			}
+			
+			if (Value.IsEmpty() && Col != INDEX_NONE)
+			{
+				Value = CellValue;
+			}
+			
+			FString ErrorStr = DataTableUtils::AssignStringToProperty(Value, Prop, RowData);
+			if (ErrorStr.Len() > 0)
+			{
+				UE_LOG(LogParnnyExcel, Error, TEXT("Problem assigning string '%s' to property '%s' on row '%d' : %s"), *Value, *PropName.ToString(), Row, *ErrorStr);
 			}
 		}
 		FTableRowBase* TableRowBase = reinterpret_cast<FTableRowBase*>(RowData);
@@ -447,6 +490,10 @@ FString FDataTableImporterXlsx::GetVar(const FName VarName) const
 
 bool FDataTableImporterXlsx::ReadReferenceData(const FName& RefSheetName, TMap<FName, FString>& OutRowMap) const
 {
+	if (WorksheetNames.Contains(TCHAR_TO_UTF8(*RefSheetName.ToString())) == false)
+	{
+		return false;
+	}
 	xlnt::worksheet RefSheet = Workbook->sheet_by_title(TCHAR_TO_UTF8(*RefSheetName.ToString()));
 	int32 RowL = RefSheet.lowest_row();
 	int32 RowH = RefSheet.highest_row();
@@ -467,6 +514,10 @@ bool FDataTableImporterXlsx::ReadReferenceData(const FName& RefSheetName, TMap<F
 			FieldRef.column_index(xlnt::column_t(Col));
 			xlnt::cell Cell = RefSheet.cell(FieldRef);
 			FName FieldName = UTF8_TO_TCHAR(Cell.to_string().c_str());
+			if (FieldName.ToString().StartsWith(TEXT("#")))
+			{
+				continue;
+			}
 			FieldIndexMap.Add(FieldName, Col);
 			if (FieldName == "---" || FieldName == "RowName")
 			{
@@ -521,7 +572,7 @@ bool FDataTableImporterXlsx::ReadReferenceData(const FName& RefSheetName, TMap<F
 		for(TTuple<FName, int>& Field : FieldIndexMap)
 		{
 			FName PropName = Field.Key;
-			if (Field.Value == RowNameCol || Field.Key.IsNone()) continue;
+			if (Field.Value == RowNameCol || Field.Key.IsNone() || Field.Value == INDEX_NONE) continue;
 			
 			xlnt::cell_reference CellRef(Field.Value, Row);
 			xlnt::cell Cell = RefSheet.cell(CellRef);
@@ -550,5 +601,3 @@ bool FDataTableImporterXlsx::ReadReferenceData(const FName& RefSheetName, TMap<F
 	}
 	return OutRowMap.Num() > 0;
 }
-
-UE_ENABLE_OPTIMIZATION

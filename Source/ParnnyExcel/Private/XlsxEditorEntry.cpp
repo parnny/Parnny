@@ -19,6 +19,8 @@
 
 #define LOCTEXT_NAMESPACE "UXlsxEditorEntry"
 
+PRAGMA_DISABLE_OPTIMIZATION
+
 void UXlsxEditorEntry::RegisterFileMenus()
 {
 	FToolMenuOwnerScoped OwnerScoped(this);
@@ -36,12 +38,15 @@ void UXlsxEditorEntry::RegisterFileMenus()
 				{
 					if (TSharedPtr<const FContentBrowserFileItemDataPayload> FilePayload = ContentBrowserFileData::GetFileItemPayload(XlsxFileDataSource.Get(), *ItemDataPtr))
 					{
-						SelectedFiles.Add(FilePayload.ToSharedRef());
+						if (XlsxFileDataSource->CanEditItem(*ItemDataPtr, nullptr))
+						{
+							SelectedFiles.Add(FilePayload.ToSharedRef());
+						}
 					}
 				}
 			}
 			
-			if (SelectedFiles.Num() > 0)
+			if (SelectedFiles.Num())
 			{
 				// Run
 				{
@@ -77,9 +82,9 @@ void UXlsxEditorEntry::RegisterFileMenus()
 					);
 					
 					Section.AddMenuEntry(
-						"ExportXlsxFile",
-						LOCTEXT("ExportXlsxFile", "Export As DataTable ..."),
-						LOCTEXT("ExportXlsxFileToolTip", "Export As DataTable"),
+						"ImportXlsxFile",
+						LOCTEXT("ImportXlsxFile", "Import As DataTable ..."),
+						LOCTEXT("ImportXlsxFileToolTip", "Import As DataTable"),
 						FSlateIcon(),
 						FUIAction(ExecuteAction_Export)
 					);
@@ -193,8 +198,13 @@ namespace XlsxEditorEntry
 				DataTableExporterXlsx.WriteTable(*DataTable);
 				if (FFileHelper::SaveArrayToFile(DataView, *OutFilenames[0]))
 				{
-					FString Abs = FPaths::ConvertRelativePathToFull(OutFilenames[0]);
-					FPlatformProcess::LaunchFileInDefaultExternalApplication(*Abs);
+					// 弹出确认取消对话框
+					const EAppReturnType::Type ReturnType = FMessageDialog::Open( EAppMsgType::OkCancel, LOCTEXT("RequireOpenExportedFile", "Open Exported Xlsx File?"));
+					if (ReturnType == EAppReturnType::Type::Ok)
+					{
+						FString AbsPath = FPaths::ConvertRelativePathToFull(OutFilenames[0]);
+						FPlatformProcess::LaunchFileInDefaultExternalApplication(*AbsPath);
+					}
 				}
 			}
 		}
@@ -203,7 +213,7 @@ namespace XlsxEditorEntry
 		UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateLambda([]()
 		{
 			FToolMenuOwnerScoped OwnerScoped(UE_MODULE_NAME);
-			UToolMenu* Menu = UE::ContentBrowser::ExtendToolMenu_AssetContextMenu(UDataTable::StaticClass());
+			UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("ContentBrowser.AssetContextMenu");
 		
 			FToolMenuSection& Section = Menu->FindOrAddSection("GetAssetActions");
 			Section.AddDynamicEntry(NAME_None, FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
@@ -212,9 +222,18 @@ namespace XlsxEditorEntry
 					const TAttribute<FText> Label = LOCTEXT("DataTable_ExportAsXlsx", "Export as Xlsx");
 					const TAttribute<FText> ToolTip = LOCTEXT("DataTable_ExportAsXlsxTooltip", "Export the data table as a file containing Xlsx data.");
 					const FSlateIcon Icon = FSlateIcon();
-	
+
 					FToolUIAction UIAction;
 					UIAction.ExecuteAction = FToolMenuExecuteAction::CreateStatic(&ExecuteExportAsXlsx);
+					UIAction.CanExecuteAction = FToolMenuCanExecuteAction::CreateLambda([](const FToolMenuContext& InContext)
+					{
+						if (const UContentBrowserAssetContextMenuContext* Context = UContentBrowserAssetContextMenuContext::FindContextWithAssets(InContext))
+						{
+							const TArray<UDataTable*> SelectedObjects = Context->LoadSelectedObjects<UDataTable>();
+							return SelectedObjects.Num() > 0;
+						};
+						return false;
+					});
 					InSection.AddMenuEntry("DataTable_ExportAsCSV", Label, ToolTip, Icon, UIAction);
 				}
 			}));
@@ -223,3 +242,5 @@ namespace XlsxEditorEntry
 }
 
 #undef LOCTEXT_NAMESPACE
+
+PRAGMA_ENABLE_OPTIMIZATION

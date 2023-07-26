@@ -6,10 +6,6 @@
 #include "XlsxDefines.h"
 #include "cell/cell.hpp"
 
-/**
- * 
- */
-
 class PARNNYEXCEL_API FDataTableExporterXlsx
 {
 public:
@@ -50,4 +46,5 @@ private:
 	TMap<FName, FXlsxFieldMeta> TableFieldMeta;
 	TMap<FName, FString> TableVars;
 	TMap<FName, TMap<FName, FString>> RefSheetsMap;
+	TArray<FName> WorksheetNames;
 };

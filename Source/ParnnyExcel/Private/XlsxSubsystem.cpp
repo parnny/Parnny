@@ -11,8 +11,6 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "EditorFramework/AssetImportData.h"
 
-UE_DISABLE_OPTIMIZATION
-
 void UXlsxSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	if (UContentBrowserDataSubsystem* Subsystem = Collection.InitializeDependency<UContentBrowserDataSubsystem>())
@@ -21,7 +19,9 @@ void UXlsxSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	}
 	Super::Initialize(Collection);
 
-	const FString FilePath = TEXT("/Script/Engine.Texture2D'/Game/Shared/Textures/XlsxIcon.XlsxIcon'");
+	// 获取插件目录下的资源
+	
+	const FString FilePath = TEXT("/Script/Engine.Texture2D'/YoozooToolkit/Textures/XlsxIcon.XlsxIcon'");
 	XlsxIcon = LoadObject<UTexture2D>(nullptr, *FilePath, nullptr, LOAD_None, nullptr);
 
 	const UXlsxSettings* Settings = GetMutableDefault<UXlsxSettings>();
@@ -100,5 +100,3 @@ void UXlsxSubsystem::OnDirectoryChanged(const TArray<FFileChangeData>& InFileCha
 		FReimportManager::Instance()->ValidateAllSourceFileAndReimport(ReimportAssets, true, INDEX_NONE, false);
 	}
 }
-
-UE_ENABLE_OPTIMIZATION

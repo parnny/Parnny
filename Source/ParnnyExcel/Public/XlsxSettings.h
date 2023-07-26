@@ -22,4 +22,7 @@ class PARNNYEXCEL_API UXlsxSettings : public UDeveloperSettings
 	
 	UPROPERTY(Config, EditAnywhere, meta=(RelativeToGameContentDir, ConfigRestartRequired=true))
 	FDirectoryPath XlsxExportPath;
+	
+	UPROPERTY(Config, EditAnywhere, meta=(RelativeToGameContentDir, ConfigRestartRequired=true, FilePathFilter="png"))
+	FFilePath IconPath;
 };

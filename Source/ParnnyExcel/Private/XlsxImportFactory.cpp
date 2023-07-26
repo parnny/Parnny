@@ -2,6 +2,9 @@
 
 
 #include "XlsxImportFactory.h"
+
+#include <vector>
+
 #include "DataTableEditorUtils.h"
 #include "DataTableXlsx.h"
 #include "ParnnyLogChannels.h"
@@ -10,6 +13,8 @@
 #include "EditorFramework/AssetImportData.h"
 #include "Interfaces/IMainFrameModule.h"
 #include "Misc/FileHelper.h"
+#include "Subsystems/AssetEditorSubsystem.h"
+#include "workbook/workbook.hpp"
 
 #define LOCTEXT_NAMESPACE "XlsxImportFactory"
 
@@ -130,8 +135,6 @@ UObject* UXlsxImportFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 
 	xlnt::workbook Workbook;
 
-	ImportSettings.Filename = InName.ToString();
-
 	TArray<uint8> FileData;
 	if (!FFileHelper::LoadFileToArray(FileData, *Filename, FILEREAD_AllowWrite))
 	{
@@ -154,6 +157,13 @@ UObject* UXlsxImportFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 	DataTableImporter.ReadVars();
 	DataTableImporter.ReadMeta();
 
+	const FString VarExportName = DataTableImporter.GetVar(TEXT("ExportName"));
+	if (!VarExportName.IsEmpty())
+	{
+		InName = FName(*VarExportName);
+	}
+	
+	ImportSettings.Filename = InName.ToString();
 	UDataTable* ExistingTable = FindObject<UDataTable>(InParent, *InName.ToString());
 
 	bool bDoImport = true;
@@ -162,7 +172,7 @@ UObject* UXlsxImportFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 	{
 		ImportSettings.ImportRowStruct = ExistingTable->RowStruct;
 	}
-	FString VarRowStruct = DataTableImporter.GetVar(TEXT("RowStruct"));
+	const FString VarRowStruct = DataTableImporter.GetVar(TEXT("RowStruct"));
 	if (!VarRowStruct.IsEmpty())
 	{
 		if (UScriptStruct* FoundStruct = FindObject<UScriptStruct>(nullptr, *VarRowStruct, true))
@@ -219,10 +229,9 @@ UObject* UXlsxImportFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 		NewTable->OnDataTableChanged().Broadcast();
 
 		// Print out
-		UE_LOG(LogParnnyExcel, Log, TEXT("Imported DataTable '%s' - %d Problems"), *InName.ToString(), Problems.Num());
+		UE_LOG(LogParnnyExcel, Log, TEXT("Imported DataTable '%s(%s)' - %d Problems"), *InName.ToString(), *NewTable->RowStruct.GetFullName(), Problems.Num());
 		NewAsset = NewTable;
 	}
-	
 	return NewAsset;
 }
 
@@ -242,6 +251,7 @@ void UXlsxImportFactory::OpenImportSettingsWindow(bool& bImport)
 	const TSharedPtr<SWidget> RowStructCombo = FDataTableEditorUtils::MakeRowStructureComboBox(FDataTableEditorUtils::FOnDataTableStructSelected::CreateLambda([&](UScriptStruct* InStruct)
 	{
 		ImportSettings.ImportRowStruct = InStruct;
+		UE_LOG(LogParnnyExcel, Log, TEXT("Imported DataTable Selected Struct %s"), *InStruct->GetFullName());
 	}));
 		
 	SettingsWindow->SetContent

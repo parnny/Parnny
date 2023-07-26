@@ -18,5 +18,8 @@ public:
 	void Initialize();
 	
 	virtual bool UpdateThumbnail(const FContentBrowserItemData& InItem, FAssetThumbnail& InThumbnail) override;
+	virtual bool CanEditItem(const FContentBrowserItemData& InItem, FText* OutErrorMsg) override;
+	virtual bool EditItem(const FContentBrowserItemData& InItem) override;
+	
 };
 

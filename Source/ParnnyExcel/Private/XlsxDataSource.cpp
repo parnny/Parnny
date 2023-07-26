@@ -9,6 +9,8 @@
 
 #define LOCTEXT_NAMESPACE "UContentBrowserXlsxDataSource"
 
+PRAGMA_DISABLE_OPTIMIZATION
+
 void UContentBrowserXlsxDataSource::Initialize()
 {
 	ContentBrowserFileData::FFileConfigData XlsxFileConfig;
@@ -70,6 +72,20 @@ void UContentBrowserXlsxDataSource::Initialize()
 			return true;
 		};
 
+		auto XlsxItemCanEditor = [this](const FName InFilePath, const FString& InFilename, FText* OutErrorMsg)
+		{
+			const FString CleanName = FPaths::GetCleanFilename(InFilename);
+			if (CleanName.StartsWith(TEXT("~$")))
+			{
+				if (OutErrorMsg)
+				{
+					*OutErrorMsg = LOCTEXT("CanEditTempXlsxFile", "Can not edit temp xlsx file!!!");
+				}
+				return false;
+			}
+			return true;
+		};
+
 		ContentBrowserFileData::FDirectoryActions XlsxDirectoryActions;
 		XlsxDirectoryActions.PassesFilter.BindLambda(XlsxItemPassesFilter, false);
 		XlsxDirectoryActions.GetAttribute.BindLambda(GetXlsxItemAttribute);
@@ -86,12 +102,13 @@ void UContentBrowserXlsxDataSource::Initialize()
 		XlsxFileActions.PassesFilter.BindLambda(XlsxItemPassesFilter, true);
 		XlsxFileActions.GetAttribute.BindLambda(GetXlsxItemAttribute);
 		XlsxFileActions.Preview.BindLambda(XlsxItemPreview);
+		XlsxFileActions.CanEdit.BindLambda(XlsxItemCanEditor);
 		XlsxFileConfig.RegisterFileActions(XlsxFileActions);
 	}
 	Super::Initialize(XlsxFileConfig);
 
 	const UXlsxSettings* XlsxSettings = GetDefault<UXlsxSettings>();
-	if (XlsxSettings->XlsxSourcePath.Path.IsEmpty() || true)
+	if (XlsxSettings->XlsxSourcePath.Path.IsEmpty())
 	{
 		TArray<FString> RootPaths;
 		FPackageName::QueryRootContentPaths(RootPaths);
@@ -111,6 +128,10 @@ void UContentBrowserXlsxDataSource::Initialize()
 
 bool UContentBrowserXlsxDataSource::UpdateThumbnail(const FContentBrowserItemData& InItem, FAssetThumbnail& InThumbnail)
 {
+	if (InItem.GetItemName().ToString().StartsWith(TEXT("~$")))
+	{
+		return Super::UpdateThumbnail(InItem, InThumbnail);
+	}
 	if (const UXlsxSubsystem* XlsxSubsystem = GEditor->GetEditorSubsystem<UXlsxSubsystem>())
 	{
 		if (XlsxSubsystem->XlsxIcon)
@@ -122,4 +143,28 @@ bool UContentBrowserXlsxDataSource::UpdateThumbnail(const FContentBrowserItemDat
 	return Super::UpdateThumbnail(InItem, InThumbnail);
 }
 
+bool UContentBrowserXlsxDataSource::CanEditItem(const FContentBrowserItemData& InItem, FText* OutErrorMsg)
+{
+	if (InItem.GetItemName().ToString().StartsWith(TEXT("~$")))
+	{
+		if (OutErrorMsg)
+		{
+			*OutErrorMsg = LOCTEXT("CanEditTempXlsxFile", "Can not edit temp xlsx file!!!");
+		}
+		return false;
+	}
+	return Super::CanEditItem(InItem, OutErrorMsg);
+}
+
+bool UContentBrowserXlsxDataSource::EditItem(const FContentBrowserItemData& InItem)
+{
+	if (InItem.GetItemName().ToString().StartsWith(TEXT("~$")))
+	{
+		return false;
+	}
+	return Super::EditItem(InItem);
+}
+
 #undef LOCTEXT_NAMESPACE
+
+PRAGMA_ENABLE_OPTIMIZATION
