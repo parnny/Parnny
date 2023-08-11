@@ -1,0 +1,3 @@
+[submodule "Plugins/ParnnyTookit"]
+	path = Plugins/ParnnyTookit
+	url = https://github.com/parnny/ParnnyToolkit.git
