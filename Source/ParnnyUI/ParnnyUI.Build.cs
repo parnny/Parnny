@@ -9,7 +9,7 @@ public class ParnnyUI : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core",
+                "Core", 
             }
         );
 

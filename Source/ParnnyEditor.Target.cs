@@ -15,6 +15,6 @@ public class ParnnyEditorTarget : TargetRules
 
 	private void RegisterModulesCreatedByRider()
 	{
-		ExtraModuleNames.AddRange(new string[] { "ParnnyNetwork", "ParnnyCore", "ParnnyUI", "ParnnyMixin", "ParnnyExcel" });
+		ExtraModuleNames.AddRange(new string[] { "ParnnyNetwork", "ParnnyCore", "ParnnyUI", "ParnnyMixin" });
 	}
 }

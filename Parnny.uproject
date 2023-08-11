@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.2",
+	"EngineAssociation": "{60D77C4A-4134-8774-846A-8E9105CB8F30}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -27,11 +27,6 @@
 		{
 			"Name": "ParnnyMixin",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		},
-		{
-			"Name": "ParnnyExcel",
-			"Type": "EditorNoCommandlet",
 			"LoadingPhase": "Default"
 		}
 	],
@@ -66,6 +61,18 @@
 		},
 		{
 			"Name": "ControlFlows",
+			"Enabled": true
+		},
+		{
+			"Name": "ScriptableToolsFramework",
+			"Enabled": true
+		},
+		{
+			"Name": "ScriptableToolsEditorMode",
+			"Enabled": true
+		},
+		{
+			"Name": "ParnnyToolkit",
 			"Enabled": true
 		}
 	],
