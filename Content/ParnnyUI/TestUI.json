@@ -1,0 +1,618 @@
+{
+	"Class": "CanvasPanel '/Script/UMG.CanvasPanel'",
+	"Name": "CanvasPanel_0",
+	"CanvasPanel_0":
+	{
+		"Slots": [
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Right": 1.921875,
+						"Bottom": 1.0810550451278687
+					},
+					"Anchors":
+					{
+						"Maximum":
+						{
+							"X": 1,
+							"Y": 1
+						}
+					}
+				},
+				"Content":
+				{
+					"Class": "Image '/Script/UMG.Image'",
+					"Name": "Death_bg_xian",
+					"Death_bg_xian":
+					{
+						"Brush":
+						{
+							"TintColor":
+							{
+								"SpecifiedColor":
+								{
+									"A": 0.10000000149011612
+								}
+							},
+							"ResourceObject": "/Script/Engine.Texture2D'/Game/Paper/Umg/Image/Texture/UI_Death_3.UI_Death_3'"
+						},
+						"bIsVariable": false
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Right": -2.0821290016174316,
+						"Bottom": 1015.0810546875
+					},
+					"Anchors":
+					{
+						"Maximum":
+						{
+							"X": 1,
+							"Y": 1
+						}
+					}
+				},
+				"Content":
+				{
+					"Class": "Image '/Script/UMG.Image'",
+					"Name": "Death_bg_hei",
+					"Death_bg_hei":
+					{
+						"Brush":
+						{
+							"ImageSize":
+							{
+								"X": 1920,
+								"Y": 64
+							},
+							"TintColor":
+							{
+								"SpecifiedColor":
+								{
+									"R": 0,
+									"G": 0,
+									"B": 0,
+									"A": 0.85600000619888306
+								}
+							},
+							"ResourceObject": "/Script/Engine.Texture2D'/Game/Paper/Umg/Image/Texture/UI_Knapsack_13.UI_Knapsack_13'"
+						},
+						"bIsVariable": false
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Top": 1081.0810546875,
+						"Right": 0,
+						"Bottom": 78.00006103515625
+					},
+					"Anchors":
+					{
+						"Maximum":
+						{
+							"X": 1,
+							"Y": 1
+						}
+					}
+				},
+				"Content":
+				{
+					"Class": "Image '/Script/UMG.Image'",
+					"Name": "Death_bg_hei_2",
+					"Death_bg_hei_2":
+					{
+						"Brush":
+						{
+							"TintColor":
+							{
+								"SpecifiedColor":
+								{
+									"R": 0,
+									"G": 0,
+									"B": 0
+								}
+							}
+						},
+						"bIsVariable": false
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Right": 60,
+						"Bottom": 60
+					},
+					"Anchors":
+					{
+						"Minimum":
+						{
+							"X": 1
+						},
+						"Maximum":
+						{
+							"X": 1
+						}
+					},
+					"Alignment":
+					{
+						"X": 1.25,
+						"Y": -0.05000000074505806
+					}
+				},
+				"Content":
+				{
+					"Class": "Image '/Script/UMG.Image'",
+					"Name": "ProgressBar",
+					"ProgressBar":
+					{
+						"Brush":
+						{
+							"ImageSize":
+							{
+								"X": 314,
+								"Y": 313
+							},
+							"ResourceObject": "/Script/Engine.MaterialInstanceConstant'/Game/Paper/Umg/Image/Texture/CircleProgressBar_Inst.CircleProgressBar_Inst'"
+						}
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Right": 60,
+						"Bottom": 60
+					},
+					"Anchors":
+					{
+						"Minimum":
+						{
+							"X": 1
+						},
+						"Maximum":
+						{
+							"X": 1
+						}
+					},
+					"Alignment":
+					{
+						"X": 1.25,
+						"Y": -0.05000000074505806
+					}
+				},
+				"Content":
+				{
+					"Class": "Image '/Script/UMG.Image'",
+					"Name": "ProgressBar_BG",
+					"ProgressBar_BG":
+					{
+						"Brush":
+						{
+							"ImageSize":
+							{
+								"X": 314,
+								"Y": 313
+							},
+							"TintColor":
+							{
+								"SpecifiedColor":
+								{
+									"A": 0.4699999988079071
+								}
+							},
+							"ResourceObject": "/Script/Engine.Texture2D'/Game/Paper/Umg/Image/Texture/UI_Death_15.UI_Death_15'"
+						},
+						"bIsVariable": false
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Right": 60,
+						"Bottom": 60
+					},
+					"Anchors":
+					{
+						"Minimum":
+						{
+							"X": 1
+						},
+						"Maximum":
+						{
+							"X": 1
+						}
+					},
+					"Alignment":
+					{
+						"X": 1.25,
+						"Y": -0.05000000074505806
+					}
+				},
+				"Content":
+				{
+					"Class": "Image '/Script/UMG.Image'",
+					"Name": "ProgressBar_Light",
+					"ProgressBar_Light":
+					{
+						"Brush":
+						{
+							"ImageSize":
+							{
+								"X": 314,
+								"Y": 313
+							},
+							"TintColor":
+							{
+								"SpecifiedColor":
+								{
+									"R": 0.88792300224304199,
+									"G": 0.82671600580215454,
+									"B": 0
+								}
+							},
+							"ResourceObject": "/Script/Engine.Texture2D'/Game/Paper/Umg/Image/Texture/UI_Death_17.UI_Death_17'"
+						},
+						"RenderTransform":
+						{
+							"Angle": -36
+						}
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Top": 20,
+						"Right": 0,
+						"Bottom": 40
+					},
+					"Anchors":
+					{
+						"Minimum":
+						{
+							"Y": 1
+						},
+						"Maximum":
+						{
+							"X": 1,
+							"Y": 1
+						}
+					},
+					"Alignment":
+					{
+						"Y": -1.1643160581588745
+					}
+				},
+				"Content":
+				{
+					"Class": "Button '/Script/UMG.Button'",
+					"Name": "Button_rebirth",
+					"Button_rebirth":
+					{
+						"WidgetStyle":
+						{
+							"Normal":
+							{
+								"DrawAs": "Image",
+								"ImageSize":
+								{
+									"X": 1920,
+									"Y": 38
+								},
+								"ResourceObject": "/Script/Engine.Texture2D'/Game/Paper/Umg/Image/Texture/UI_Death_4.UI_Death_4'"
+							}
+						},
+						"bIsVariable": false,
+						"Slots": [
+							{
+								"Padding":
+								{
+									"Left": 0,
+									"Top": 0,
+									"Right": 0,
+									"Bottom": 0
+								},
+								"Content":
+								{
+									"Class": "TextBlock '/Script/UMG.TextBlock'",
+									"Name": "TextBlock_133",
+									"TextBlock_133":
+									{
+										"Text": "NSLOCTEXT(\"[559A92214F9CC6D3DECBB08222993DD2]\", \"3A10ACED46403FDD7643158CB81E698F\", \"按下空格重生\")",
+										"ColorAndOpacity":
+										{
+											"SpecifiedColor":
+											{
+												"R": 0.036458000540733337,
+												"G": 0,
+												"B": 0.014169000089168549
+											}
+										},
+										"ShadowOffset":
+										{
+											"X": 0.13662099838256836
+										},
+										"ShadowColorAndOpacity":
+										{
+											"A": 0.7417290210723877
+										},
+										"MinDesiredWidth": 1,
+										"Justification": "Center",
+										"AutoWrapText": true
+									}
+								}
+							}
+						]
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Left": -54.8048095703125,
+						"Top": 18.318317413330078,
+						"Right": 20,
+						"Bottom": 35.132991790771484
+					},
+					"Anchors":
+					{
+						"Minimum":
+						{
+							"X": 1
+						},
+						"Maximum":
+						{
+							"X": 1
+						}
+					}
+				},
+				"Content":
+				{
+					"Class": "BMTextBlock '/Script/BMFont.BMTextBlock'",
+					"Name": "CDText",
+					"CDText":
+					{
+						"Asset": "/Script/BMFont.BMFontAsset'/Game/Paper/Umg/Fonts/BMFonts/Cyberfont.Cyberfont'",
+						"Text": "NSLOCTEXT(\"[559A92214F9CC6D3DECBB08222993DD2]\", \"63FB324D475E7A0020F461A92EC92D86\", \"5\")",
+						"Justification": "Center",
+						"FontSize": 12
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Top": 60.06005859375,
+						"Right": 1.921875,
+						"Bottom": 1013.02099609375
+					},
+					"Anchors":
+					{
+						"Maximum":
+						{
+							"X": 1,
+							"Y": 1
+						}
+					}
+				},
+				"Content":
+				{
+					"Class": "Image '/Script/UMG.Image'",
+					"Name": "Death_bg_xian_1",
+					"Death_bg_xian_1":
+					{
+						"Brush":
+						{
+							"ResourceObject": "/Script/Engine.Texture2D'/Game/Paper/Umg/Image/Texture/UI_Death_8.UI_Death_8'"
+						},
+						"bIsVariable": false
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Top": 995.54248046875,
+						"Right": 1.921875,
+						"Bottom": 77.53857421875
+					},
+					"Anchors":
+					{
+						"Maximum":
+						{
+							"X": 1,
+							"Y": 1
+						}
+					}
+				},
+				"Content":
+				{
+					"Class": "Image '/Script/UMG.Image'",
+					"Name": "Death_bg_xian_2",
+					"Death_bg_xian_2":
+					{
+						"Brush":
+						{
+							"ResourceObject": "/Script/Engine.Texture2D'/Game/Paper/Umg/Image/Texture/UI_Death_8.UI_Death_8'"
+						},
+						"bIsVariable": false
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Right": 0,
+						"Bottom": 0
+					},
+					"Anchors":
+					{
+						"Maximum":
+						{
+							"X": 1,
+							"Y": 1
+						}
+					},
+					"Alignment":
+					{
+						"X": 0.5,
+						"Y": 0.5
+					}
+				},
+				"ZOrder": 1,
+				"Content":
+				{
+					"Class": "Image '/Script/UMG.Image'",
+					"Name": "BlackMask",
+					"BlackMask":
+					{
+						"ColorAndOpacity":
+						{
+							"R": 0,
+							"G": 0,
+							"B": 0
+						},
+						"Visibility": "SelfHitTestInvisible",
+						"RenderOpacity": 0
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Left": -218.064208984375,
+						"Top": 21.25201416015625,
+						"Right": 140,
+						"Bottom": 35
+					},
+					"Anchors":
+					{
+						"Minimum":
+						{
+							"X": 1
+						},
+						"Maximum":
+						{
+							"X": 1
+						}
+					}
+				},
+				"Content":
+				{
+					"Class": "Image '/Script/UMG.Image'",
+					"Name": "Death_Text_chengsheng",
+					"Death_Text_chengsheng":
+					{
+						"Brush":
+						{
+							"ImageSize":
+							{
+								"X": 380,
+								"Y": 89
+							},
+							"ResourceObject": "/Script/Engine.Texture2D'/Game/Paper/Umg/Image/Texture/UI_Death_16.UI_Death_16'"
+						}
+					}
+				}
+			},
+			{
+				"LayoutData":
+				{
+					"Offsets":
+					{
+						"Left": -232,
+						"Top": 16,
+						"Right": 212.11212158203125,
+						"Bottom": 41.344676971435547
+					},
+					"Anchors":
+					{
+						"Minimum":
+						{
+							"X": 1
+						},
+						"Maximum":
+						{
+							"X": 1
+						}
+					}
+				},
+				"Content":
+				{
+					"Class": "CanvasPanel '/Script/UMG.CanvasPanel'",
+					"Name": "CanvasPanel_1",
+					"CanvasPanel_1":
+					{
+						"RenderOpacity": 0,
+						"Slots": [
+							{
+								"Content":
+								{
+									"Class": "TextBlock '/Script/UMG.TextBlock'",
+									"Name": "TextBlock_96",
+									"TextBlock_96":
+									{
+										"Text": "NSLOCTEXT(\"[559A92214F9CC6D3DECBB08222993DD2]\", \"FE39268E42C784D368A5C9945164EA76\", \"自动重生：\")"
+									}
+								}
+							},
+							{
+								"LayoutData":
+								{
+									"Offsets":
+									{
+										"Left": 156,
+										"Top": 1.9979979991912842,
+										"Right": 43.276611328125,
+										"Bottom": 35.338672637939453
+									}
+								},
+								"Content":
+								{
+									"Class": "TextBlock '/Script/UMG.TextBlock'",
+									"Name": "AutoRevieTime",
+									"AutoRevieTime":
+									{
+										"Text": "NSLOCTEXT(\"[559A92214F9CC6D3DECBB08222993DD2]\", \"4A87CE5146328A93921786BACBB7BABD\", \"15\")",
+										"bIsVariable": true
+									}
+								}
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+}
